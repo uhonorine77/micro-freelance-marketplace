@@ -1,0 +1,133 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String       @id @default(uuid())
+  email         String       @unique
+  password      String
+  firstName     String
+  lastName      String
+  role          UserRole
+  isVerified    Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  tasks         Task[]
+  bids          Bid[]
+  notifications Notification[]
+  messages      Message[]
+}
+
+enum UserRole {
+  freelancer
+  client
+}
+
+model Task {
+  id          String      @id @default(uuid())
+  title       String
+  description String
+  category    TaskCategory
+  budget      Float
+  budgetType  BudgetType
+  deadline    DateTime
+  status      TaskStatus   @default(open)
+  clientId    String
+  client      User         @relation(fields: [clientId], references: [id])
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  bids        Bid[]
+  milestones  Milestone[]
+  messages    Message[]
+}
+
+enum TaskCategory {
+  web_development
+  mobile_development
+  design
+  writing
+  marketing
+  data_analysis
+  other
+}
+
+enum BudgetType {
+  fixed
+  hourly
+}
+
+enum TaskStatus {
+  open
+  assigned
+  in_progress
+  completed
+  cancelled
+}
+
+model Bid {
+  id           String      @id @default(uuid())
+  taskId       String
+  task         Task        @relation(fields: [taskId], references: [id])
+  freelancerId String
+  freelancer   User        @relation(fields: [freelancerId], references: [id])
+  amount       Float
+  proposal     String
+  timeline     String
+  status       BidStatus   @default(pending)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+enum BidStatus {
+  pending
+  accepted
+  rejected
+  withdrawn
+}
+
+model Milestone {
+  id          String       @id @default(uuid())
+  taskId      String
+  task        Task         @relation(fields: [taskId], references: [id])
+  title       String
+  description String
+  amount      Float
+  dueDate     DateTime
+  status      MilestoneStatus @default(pending)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+enum MilestoneStatus {
+  pending
+  in_progress
+  completed
+  paid
+  cancelled
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  message   String
+  isRead    Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id])
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+}
