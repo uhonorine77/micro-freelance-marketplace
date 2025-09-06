@@ -14,6 +14,7 @@ model User {
   password      String
   firstName     String
   lastName      String
+  avatarUrl     String? 
   role          UserRole
   isVerified    Boolean      @default(false)
   createdAt     DateTime     @default(now())
@@ -27,6 +28,7 @@ model User {
 enum UserRole {
   freelancer
   client
+  admin
 }
 
 model Task {

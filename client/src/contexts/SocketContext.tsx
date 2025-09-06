@@ -2,6 +2,9 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
+import { useQueryClient } from 'react-query';
+import { toast } from 'react-toastify';
+import { Notification } from '../types';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -26,6 +29,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const { token, user } = useAuth(); // User object is now correctly typed from AuthContext
+  const queryClient = useQueryClient(); // <-- Get query client instance
 
   useEffect(() => {
     // Only attempt to connect if both token and user are available
@@ -36,6 +40,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         auth: {
           token
         },
+
         // Optional: Add transport options if you face connection issues
         // transports: ['websocket', 'polling']
       });
@@ -59,6 +64,12 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         }
       });
 
+      // --- REAL-TIME NOTIFICATION LISTENER ---
+      newSocket.on('new_notification', (notification: Notification) => {
+        toast.info(notification.message); // Show a toast
+        queryClient.invalidateQueries(['notifications', user.id]); // Refetch notifications
+      });
+
       setSocket(newSocket);
 
       // Clean up on component unmount or when token/user change
@@ -67,6 +78,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         newSocket.off('connect');
         newSocket.off('disconnect');
         newSocket.off('connect_error');
+        newSocket.off('new_notification'); // <-- Clean up listener
         newSocket.close();
       };
     } else {
@@ -78,7 +90,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         setIsConnected(false);
       }
     }
-  }, [token, user]); // Re-run effect when token or user changes
+  }, [token, user, queryClient]); // Re-run effect when token or user changes
 
   const value = {
     socket,

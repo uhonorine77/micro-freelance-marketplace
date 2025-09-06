@@ -11,7 +11,8 @@ import {
   Bid,
   TaskStatus,
   UserRole
-} from '../types'; // No .js extension
+} from '../types'; 
+import { getSocketIoInstance } from '../socket'; 
 
 const router = express.Router();
 
@@ -101,7 +102,19 @@ export const createBidsRouter = (prisma: PrismaClient) => {
           data: bid
         };
 
-        res.status(201).json(response);
+        // --- REAL-TIME NOTIFICATION LOGIC ---
+      const notificationMessage = `You have a new $${amount} bid on your project "${task.title}"`;
+      const notification = await prisma.notification.create({
+        data: {
+          userId: task.clientId, // Notify the client who owns the task
+          message: notificationMessage,
+        }
+      });
+
+      const io = getSocketIoInstance();
+      io.to(`user_${task.clientId}`).emit('new_notification', notification);
+
+        res.status(201).json({ success: true, message: 'Bid submitted successfully', data: bid });
       } catch (error: unknown) {
         console.error('Failed to submit bid:', error);
         const response: ApiResponse = {

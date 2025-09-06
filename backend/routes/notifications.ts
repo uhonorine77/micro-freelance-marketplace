@@ -89,6 +89,40 @@ export const createNotificationsRouter = (prisma: PrismaClient) => {
       res.status(500).json(response);
     }
   });
+  
+  // New endpoint to mark all notifications as read
+  router.patch('/read-all', async (req: AuthRequest, res: Response<ApiResponse<null>>): Promise<void> => {
+    try {
+      if (!req.user?.id) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'User not authenticated'
+        };
+        res.status(401).json(response);
+        return;
+      }
+
+      await prisma.notification.updateMany({
+        where: { userId: req.user.id, isRead: false },
+        data: { isRead: true }
+      });
+
+      const response: ApiResponse<null> = {
+        success: true,
+        message: 'All notifications marked as read',
+        data: null
+      };
+      res.json(response);
+    } catch (error: unknown) {
+      console.error('Failed to update notifications:', error);
+      const response: ApiResponse = {
+        success: false,
+        error: (error instanceof Error) ? error.message : 'Failed to update notifications'
+      };
+      res.status(500).json(response);
+    }
+  });
+
 
   return router;
 };

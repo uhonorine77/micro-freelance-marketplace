@@ -1,10 +1,23 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Search, Users, Shield, Zap } from 'lucide-react';
 
 const Home: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
+
+  // If user exists, this component will redirect, so we can return null
+  // to avoid a brief flash of the home page content.
+  if (user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen">

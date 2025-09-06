@@ -11,7 +11,7 @@ import {
   MessageWithSender,
   TaskStatus,
   UserRole
-} from '../types'; // No .js extension
+} from '../types'; 
 
 // Define custom Socket type for better type safety
 interface CustomSocket extends Socket {
@@ -20,7 +20,17 @@ interface CustomSocket extends Socket {
   };
 }
 
+let ioInstance: Server;
+
+export const getSocketIoInstance = (): Server => {
+  if (!ioInstance) {
+    throw new Error("Socket.IO has not been initialized.");
+  }
+  return ioInstance;
+};
+
 export const setupSocketHandlers = (io: Server, prisma: PrismaClient): void => {
+  ioInstance = io; 
   io.use((socket: CustomSocket, next) => {
     const token = socket.handshake.auth.token;
 
@@ -45,6 +55,9 @@ export const setupSocketHandlers = (io: Server, prisma: PrismaClient): void => {
       return;
     }
     console.log(`User ${socket.data.user.id} connected`);
+
+    // Join a room for personal notifications
+    socket.join(`user_${socket.data.user.id}`);
 
     socket.on('join_task', async (payload: JoinTaskPayload) => {
       const { taskId } = payload;

@@ -1,14 +1,15 @@
 // src/contexts/AuthContext.tsx
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { AuthResponseData, User, RegisterPayload, LoginPayload } from '../types'; // Import RegisterPayload and LoginPayload
+import React, { createContext, useContext, useState, useEffect, ReactNode, Dispatch, SetStateAction } from 'react';
+import { AuthResponseData, User, RegisterPayload, LoginPayload } from '../types';
 import { authApi } from '../services/api';
 import { AxiosError } from 'axios';
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (credentials: LoginPayload) => Promise<void>; // Updated to accept LoginPayload
-  register: (userData: RegisterPayload) => Promise<void>; // Updated to accept RegisterPayload
+  setUser: Dispatch<SetStateAction<User | null>>; // <-- Expose setUser
+  login: (credentials: LoginPayload) => Promise<void>;
+  register: (userData: RegisterPayload) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -49,8 +50,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(false);
     }
   }, []);
+  
+  // Persist user to localStorage whenever it changes
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('user');
+    }
+  }, [user]);
 
-  const login = async (credentials: LoginPayload) => { // Accept LoginPayload
+
+  const login = async (credentials: LoginPayload) => {
     try {
       const response = await authApi.login(credentials);
       const { token: newToken, user: newUser } = response.data.data as AuthResponseData;
@@ -58,7 +69,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setToken(newToken);
       setUser(newUser);
       localStorage.setItem('token', newToken);
-      localStorage.setItem('user', JSON.stringify(newUser));
     } catch (error: unknown) {
       if (error instanceof AxiosError && error.response) {
         throw error.response.data;
@@ -67,7 +77,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const register = async (userData: RegisterPayload) => { // Accept RegisterPayload
+  const register = async (userData: RegisterPayload) => {
     try {
       const response = await authApi.register(userData);
       const { token: newToken, user: newUser } = response.data.data as AuthResponseData;
@@ -75,7 +85,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setToken(newToken);
       setUser(newUser);
       localStorage.setItem('token', newToken);
-      localStorage.setItem('user', JSON.stringify(newUser));
     } catch (error: unknown) {
       if (error instanceof AxiosError && error.response) {
         throw error.response.data;
@@ -89,12 +98,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setToken(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    // window.location.replace('/login'); // Optional: Force redirect on logout
   };
 
   const value = {
     user,
     token,
+    setUser, // <-- Provide setUser
     login,
     register,
     logout,

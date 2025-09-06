@@ -1,6 +1,6 @@
 // src/middleware/errorHandler.ts
 import { Request, Response, NextFunction } from 'express';
-import { ApiResponse } from '../types'; // No .js extension
+import { ApiResponse } from '../types';
 
 export const errorHandler = (
   err: Error,

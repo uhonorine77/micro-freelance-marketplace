@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-   "scripts": {
+  "scripts": {
     "dev": "tsx watch index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
@@ -24,6 +24,7 @@
     "express-validator": "^7.2.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
     "pg": "^8.16.3",
     "socket.io": "^4.8.1"
   },
@@ -33,6 +34,7 @@
     "@types/express": "^5.0.3",
     "@types/helmet": "^0.0.48",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.0.0",
     "@types/node": "^24.3.0",
     "@types/pg": "^8.15.5",
     "prisma": "^6.15.0",

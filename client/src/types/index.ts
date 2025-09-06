@@ -1,13 +1,9 @@
 // src/types/index.ts
 
-// ===========================================
-// Core Data Models - Defined entirely for the frontend
-// ===========================================
-
-// Runtime enums for Zod compatibility and runtime usage (e.g., Object.values)
 export enum UserRole {
   freelancer = 'freelancer',
   client = 'client',
+  admin = 'admin',
 }
 
 export enum TaskCategory {
@@ -48,7 +44,6 @@ export enum MilestoneStatus {
   cancelled = 'cancelled',
 }
 
-// Interfaces for our data models
 export interface User {
   id: string;
   email: string;
@@ -56,8 +51,8 @@ export interface User {
   lastName: string;
   role: UserRole;
   isVerified: boolean;
-  createdAt: string; // ISO Date string
-  updatedAt: string; // ISO Date string
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface UserPublicProfile {
@@ -74,7 +69,7 @@ export interface Task {
   category: TaskCategory;
   budget: number;
   budgetType: BudgetType;
-  deadline: string; // ISO Date string
+  deadline: string;
   status: TaskStatus;
   clientId: string;
   createdAt: string;
@@ -99,7 +94,7 @@ export interface Milestone {
   title: string;
   description: string;
   amount: number;
-  dueDate: string; // ISO Date string
+  dueDate: string;
   status: MilestoneStatus;
   createdAt: string;
   updatedAt: string;
@@ -122,7 +117,6 @@ export interface Message {
   createdAt: string;
 }
 
-// Custom interfaces for data with relations included (used in API responses)
 export interface TaskWithClient extends Task {
   client?: UserPublicProfile;
 }
@@ -135,9 +129,6 @@ export interface MessageWithSender extends Message {
   sender?: Pick<User, 'id' | 'firstName' | 'lastName'>;
 }
 
-// ===========================================
-// API Response Structures
-// ===========================================
 export interface AuthResponseData {
   token: string;
   user: User;
@@ -150,9 +141,6 @@ export interface ApiResponse<T = any> {
   data?: T;
 }
 
-// ===========================================
-// Request Body Payloads (for API calls)
-// ===========================================
 export interface RegisterPayload {
   firstName: string;
   lastName: string;
@@ -166,13 +154,18 @@ export interface LoginPayload {
   password: string;
 }
 
+export interface UpdateProfilePayload {
+  firstName: string;
+  lastName: string;
+}
+
 export interface CreateTaskPayload {
   title: string;
   description: string;
   category: TaskCategory;
   budget: number;
   budgetType: BudgetType;
-  deadline: string; // ISO Date string
+  deadline: string;
 }
 
 export interface CreateBidPayload {
@@ -187,12 +180,17 @@ export interface CreateMilestonePayload {
   title: string;
   description: string;
   amount: number;
-  dueDate: string; // ISO Date string
+  dueDate: string;
 }
 
-// ===========================================
-// Socket.IO Event Payloads
-// ===========================================
+export interface AdminStatsData {
+    totalUsers: number;
+    totalTasks: number;
+    totalBids: number;
+    openTasks: number;
+    completedTasks: number;
+}
+
 export interface JoinTaskPayload {
   taskId: string;
 }
