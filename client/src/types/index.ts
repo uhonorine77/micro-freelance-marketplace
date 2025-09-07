@@ -53,6 +53,7 @@ export interface User {
   isVerified: boolean;
   createdAt: string;
   updatedAt: string;
+  avatarUrl : string | null;
 }
 
 export interface UserPublicProfile {

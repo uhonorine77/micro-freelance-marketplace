@@ -7,7 +7,7 @@ const router = express.Router();
 
 export const createAdminRouter = (prisma: PrismaClient) => {
   
-  router.get('/stats', async (req: AuthRequest, res: Response<ApiResponse<AdminStatsData>>): Promise<void> => {
+  router.get('/stats', async (_req: AuthRequest, res: Response<ApiResponse<AdminStatsData>>): Promise<void> => {
     try {
       const totalUsers = await prisma.user.count();
       const totalTasks = await prisma.task.count();
@@ -23,7 +23,7 @@ export const createAdminRouter = (prisma: PrismaClient) => {
     }
   });
 
-  router.get('/users', async (req: AuthRequest, res: Response<ApiResponse<User[]>>): Promise<void> => {
+  router.get('/users', async (_req: AuthRequest, res: Response<ApiResponse<User[]>>): Promise<void> => {
     try {
       const users = await prisma.user.findMany({
         orderBy: { createdAt: 'desc' },
@@ -64,7 +64,7 @@ export const createAdminRouter = (prisma: PrismaClient) => {
     }
   });
 
-  router.get('/tasks', async (req: AuthRequest, res: Response<ApiResponse<TaskWithClient[]>>): Promise<void> => {
+  router.get('/tasks', async (_req: AuthRequest, res: Response<ApiResponse<TaskWithClient[]>>): Promise<void> => {
     try {
         const tasks = await prisma.task.findMany({
             orderBy: { createdAt: 'desc' },

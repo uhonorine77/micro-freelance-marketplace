@@ -17,7 +17,7 @@ const router = express.Router();
 
 export const createTasksRouter = (prisma: PrismaClient) => {
 
-  router.get('/', async (req: AuthRequest<{}, ApiResponse<TaskWithClient[]>>, res: Response<ApiResponse<TaskWithClient[]>>): Promise<void> => {
+  router.get('/', async (_req: AuthRequest<{}, ApiResponse<TaskWithClient[]>>, res: Response<ApiResponse<TaskWithClient[]>>): Promise<void> => {
     try {
       const tasks: TaskWithClient[] = await prisma.task.findMany({
         include: { client: { select: { id: true, firstName: true, lastName: true, email: true } } },

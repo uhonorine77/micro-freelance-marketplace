@@ -1,14 +1,34 @@
 // src/types/index.ts
-import { Request } from 'express';
-import { ParamsDictionary, Query } from 'express-serve-static-core';
+import { Request } from "express";
+import { ParamsDictionary, Query } from "express-serve-static-core";
 import {
-  UserRole, TaskCategory, BudgetType, TaskStatus, BidStatus, MilestoneStatus,
-  User, Task, Bid, Milestone, Notification, Message,
-} from '@prisma/client';
+  UserRole,
+  TaskCategory,
+  BudgetType,
+  TaskStatus,
+  BidStatus,
+  MilestoneStatus,
+  User,
+  Task,
+  Bid,
+  Milestone,
+  Notification,
+  Message,
+} from "@prisma/client";
 
 export {
-  UserRole, TaskCategory, BudgetType, TaskStatus, BidStatus, MilestoneStatus,
-  User, Task, Bid, Milestone, Notification, Message,
+  UserRole,
+  TaskCategory,
+  BudgetType,
+  TaskStatus,
+  BidStatus,
+  MilestoneStatus,
+  User,
+  Task,
+  Bid,
+  Milestone,
+  Notification,
+  Message,
 };
 
 export type JwtPayload = {
@@ -72,13 +92,29 @@ export interface CreateMilestoneRequestBody {
 
 export type AuthResponseData = {
   token: string;
-  user: Pick<User, 'id' | 'email' | 'firstName' | 'lastName' | 'role' | 'isVerified'>;
+  user: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: UserRole;
+    isVerified: boolean;
+    avatarUrl: string | null;
+    createdAt: string;   
+    updatedAt: string;
+  };
 };
 
-export type UserPublicProfile = Pick<User, 'id' | 'firstName' | 'lastName' | 'email'>;
+
+export type UserPublicProfile = Pick<
+  User,
+  "id" | "firstName" | "lastName" | "email"
+>;
 export type TaskWithClient = Task & { client: UserPublicProfile };
 export type BidWithFreelancer = Bid & { freelancer: UserPublicProfile };
-export type MessageWithSender = Message & { sender: Pick<User, 'id' | 'firstName' | 'lastName'> };
+export type MessageWithSender = Message & {
+  sender: Pick<User, "id" | "firstName" | "lastName">;
+};
 
 export interface TaskIdParams {
   taskId: string;

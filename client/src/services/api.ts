@@ -1,22 +1,36 @@
-// src/services/api.ts
-import axios, { AxiosResponse, AxiosError } from 'axios';
+// client/src/services/api.ts
+import axios, { AxiosResponse, AxiosError } from "axios";
 import {
-  ApiResponse, AuthResponseData, Task, Bid, Milestone, Notification, User,
-  RegisterPayload, LoginPayload, UpdateProfilePayload, CreateTaskPayload, CreateBidPayload, CreateMilestonePayload,
-  TaskWithClient, BidWithFreelancer, MessageWithSender, AdminStatsData
-} from '../types';
+  ApiResponse,
+  AuthResponseData,
+  Task,
+  Bid,
+  Milestone,
+  Notification,
+  User,
+  RegisterPayload,
+  LoginPayload,
+  UpdateProfilePayload,
+  CreateTaskPayload,
+  CreateBidPayload,
+  CreateMilestonePayload,
+  TaskWithClient,
+  BidWithFreelancer,
+  MessageWithSender,
+  AdminStatsData,
+} from "../types";
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -26,64 +40,123 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    if (error.response?.status === 401 && !error.request?.responseURL?.includes('/auth/login')) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.replace('/login');
+    if (
+      error.response?.status === 401 &&
+      !error.request?.responseURL?.includes("/auth")
+    ) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.replace("/login");
     }
     return Promise.reject(error);
   }
 );
 
 export const authApi = {
-  login: (credentials: LoginPayload): Promise<AxiosResponse<ApiResponse<AuthResponseData>>> =>
-    api.post('/auth/login', credentials),
-  register: (userData: RegisterPayload): Promise<AxiosResponse<ApiResponse<AuthResponseData>>> =>
-    api.post('/auth/register', userData),
+  login: (
+    credentials: LoginPayload
+  ): Promise<AxiosResponse<ApiResponse<AuthResponseData>>> =>
+    api.post("/auth/login", credentials),
+  register: (userData: RegisterPayload): Promise<AxiosResponse<ApiResponse>> =>
+    api.post("/auth/register", userData),
+  verifyEmail: (token: string): Promise<AxiosResponse<ApiResponse>> =>
+    api.get(`/auth/verify-email/${token}`),
+  resendVerification: (): Promise<AxiosResponse<ApiResponse>> =>
+    api.post("/auth/resend-verification"),
+  forgotPassword: (email: string): Promise<AxiosResponse<ApiResponse>> =>
+    api.post("/auth/forgot-password", { email }),
+  resetPassword: ({
+    token,
+    password,
+  }: {
+    token: string;
+    password: string;
+  }): Promise<AxiosResponse<ApiResponse>> =>
+    api.post(`/auth/reset-password/${token}`, { password }),
 };
 
 export const tasksApi = {
-  getAll: (): Promise<AxiosResponse<ApiResponse<TaskWithClient[]>>> => api.get('/tasks'),
-  create: (taskData: CreateTaskPayload): Promise<AxiosResponse<ApiResponse<Task>>> => api.post('/tasks', taskData),
-  getById: (id: string): Promise<AxiosResponse<ApiResponse<TaskWithClient>>> => api.get(`/tasks/${id}`),
+  getAll: (): Promise<AxiosResponse<ApiResponse<TaskWithClient[]>>> =>
+    api.get("/tasks"),
+  create: (
+    taskData: CreateTaskPayload
+  ): Promise<AxiosResponse<ApiResponse<Task>>> => api.post("/tasks", taskData),
+  getById: (id: string): Promise<AxiosResponse<ApiResponse<TaskWithClient>>> =>
+    api.get(`/tasks/${id}`),
 };
 
 export const bidsApi = {
-  getByTask: (taskId: string): Promise<AxiosResponse<ApiResponse<BidWithFreelancer[]>>> => api.get(`/bids/task/${taskId}`),
-  create: (bidData: CreateBidPayload): Promise<AxiosResponse<ApiResponse<Bid>>> => api.post('/bids', bidData),
+  getByTask: (
+    taskId: string
+  ): Promise<AxiosResponse<ApiResponse<BidWithFreelancer[]>>> =>
+    api.get(`/bids/task/${taskId}`),
+  create: (
+    bidData: CreateBidPayload
+  ): Promise<AxiosResponse<ApiResponse<Bid>>> => api.post("/bids", bidData),
+  accept: (bidId: string): Promise<AxiosResponse<ApiResponse>> =>
+    api.patch(`/bids/${bidId}/accept`),
 };
 
 export const milestonesApi = {
-  getByTask: (taskId: string): Promise<AxiosResponse<ApiResponse<Milestone[]>>> => api.get(`/milestones/task/${taskId}`),
-  create: (milestoneData: CreateMilestonePayload): Promise<AxiosResponse<ApiResponse<Milestone>>> => api.post('/milestones', milestoneData),
+  getByTask: (
+    taskId: string
+  ): Promise<AxiosResponse<ApiResponse<Milestone[]>>> =>
+    api.get(`/milestones/task/${taskId}`),
+  create: (
+    milestoneData: CreateMilestonePayload
+  ): Promise<AxiosResponse<ApiResponse<Milestone>>> =>
+    api.post("/milestones", milestoneData),
+  requestCompletion: (
+    milestoneId: string
+  ): Promise<AxiosResponse<ApiResponse<Milestone>>> =>
+    api.patch(`/milestones/${milestoneId}/complete`),
+  releasePayment: (
+    milestoneId: string
+  ): Promise<AxiosResponse<ApiResponse<Milestone>>> =>
+    api.patch(`/milestones/${milestoneId}/release-payment`),
 };
 
 export const notificationsApi = {
-  getAll: (): Promise<AxiosResponse<ApiResponse<Notification[]>>> => api.get('/notifications'),
-  markAsRead: (id: string): Promise<AxiosResponse<ApiResponse<null>>> => api.patch(`/notifications/${id}/read`),
-  markAllAsRead: (): Promise<AxiosResponse<ApiResponse<null>>> => api.patch('/notifications/read-all'),
+  getAll: (): Promise<AxiosResponse<ApiResponse<Notification[]>>> =>
+    api.get("/notifications"),
+  markAsRead: (id: string): Promise<AxiosResponse<ApiResponse<null>>> =>
+    api.patch(`/notifications/${id}/read`),
+  markAllAsRead: (): Promise<AxiosResponse<ApiResponse<null>>> =>
+    api.patch("/notifications/read-all"),
 };
 
 export const chatApi = {
-    getMessagesByTask: (taskId: string): Promise<AxiosResponse<ApiResponse<MessageWithSender[]>>> => api.get(`/chat/task/${taskId}`),
+  getMessagesByTask: (
+    taskId: string
+  ): Promise<AxiosResponse<ApiResponse<MessageWithSender[]>>> =>
+    api.get(`/chat/task/${taskId}`),
 };
 
 export const profileApi = {
-  get: (): Promise<AxiosResponse<ApiResponse<User>>> => api.get('/profile'),
-  update: (userData: UpdateProfilePayload): Promise<AxiosResponse<ApiResponse<User>>> => api.put('/profile', userData),
-  uploadPicture: (file: File): Promise<AxiosResponse<ApiResponse<{ avatarUrl: string }>>> => {
+  get: (): Promise<AxiosResponse<ApiResponse<User>>> => api.get("/profile"),
+  update: (
+    userData: UpdateProfilePayload
+  ): Promise<AxiosResponse<ApiResponse<User>>> => api.put("/profile", userData),
+  uploadPicture: (
+    file: File
+  ): Promise<AxiosResponse<ApiResponse<{ avatarUrl: string }>>> => {
     const formData = new FormData();
-    formData.append('avatar', file);
-    return api.post('/profile/picture', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+    formData.append("avatar", file);
+    return api.post("/profile/picture", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
     });
   },
 };
 
 export const adminApi = {
-  getStats: (): Promise<AxiosResponse<ApiResponse<AdminStatsData>>> => api.get('/admin/stats'),
-  getUsers: (): Promise<AxiosResponse<ApiResponse<User[]>>> => api.get('/admin/users'),
-  deleteUser: (userId: string): Promise<AxiosResponse<ApiResponse<null>>> => api.delete(`/admin/users/${userId}`),
-  getTasks: (): Promise<AxiosResponse<ApiResponse<TaskWithClient[]>>> => api.get('/admin/tasks'),
-  deleteTask: (taskId: string): Promise<AxiosResponse<ApiResponse<null>>> => api.delete(`/admin/tasks/${taskId}`),
+  getStats: (): Promise<AxiosResponse<ApiResponse<AdminStatsData>>> =>
+    api.get("/admin/stats"),
+  getUsers: (): Promise<AxiosResponse<ApiResponse<User[]>>> =>
+    api.get("/admin/users"),
+  deleteUser: (userId: string): Promise<AxiosResponse<ApiResponse<null>>> =>
+    api.delete(`/admin/users/${userId}`),
+  getTasks: (): Promise<AxiosResponse<ApiResponse<TaskWithClient[]>>> =>
+    api.get("/admin/tasks"),
+  deleteTask: (taskId: string): Promise<AxiosResponse<ApiResponse<null>>> =>
+    api.delete(`/admin/tasks/${taskId}`),
 };

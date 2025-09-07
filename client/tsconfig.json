@@ -1,24 +1,26 @@
-// tsconfig.json
 {
   "compilerOptions": {
-    "target": "ES2022",                  /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
-    "useDefineForClassFields": true,     /* Emit ECMAScript-standard-compliant class fields. */
-    "lib": ["ES2022", "DOM", "DOM.Iterable"], /* Specify a list of bundled library declaration files that are to be included in the compilation. */
-    "module": "ESNext",                 /* Specify what module code is generated. */
-    "skipLibCheck": true,               /* Skip type checking all .d.ts files. */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
 
-    /* Bundler mode (Vite-specific) */
-    "moduleResolution": "bundler",      /* Resolve modules using Node.js style, but optimized for bundlers like Vite. */
-    "allowImportingTsExtensions": true, /* Allow importing .ts and .tsx files with their full extensions. (This is important for the `import App from './App.tsx'` type error) */
-    "resolveJsonModule": true,          /* Enable importing .json files. */
-    "isolatedModules": true,            /* Ensure that each file can be safely transpiled without relying on other files' knowledge. */
-    "noEmit": true,                     /* Do not emit outputs. Used for type checking only. */
-    "jsx": "react-jsx",                 /* Specify what JSX code is generated. */
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
 
-    "strict": true,                     /* Enable all strict type-checking options. */
-    "noUnusedLocals": true,             /* Enable error reporting for unused locals in functions. */
-    "noUnusedParameters": true,         /* Report errors on unused parameters in functions. */
-    "noFallthroughCasesInSwitch": true  /* Enable error reporting for fallthrough cases in switch statements. */
+    "noEmit": true,
+    "isolatedModules": true,
+
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
   },
-  "include": ["src"],                   /* Specify the files or directories to include in the compilation. */
+  "include": ["src", "vite-env.d.ts"],
+  "references": [{ "path": "./tsconfig.node.json" }]
 }

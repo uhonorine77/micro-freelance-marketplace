@@ -2,7 +2,7 @@
 import React from 'react';
 import { useQuery, useMutation, useQueryClient, QueryKey } from 'react-query';
 import { notificationsApi } from '../services/api';
-import { Notification } from '../types';
+import { ApiResponse, Notification } from '../types';
 import { formatDistanceToNow } from 'date-fns';
 import { Bell, CheckCheck } from 'lucide-react';
 import { toast } from 'react-toastify';
@@ -22,13 +22,14 @@ const Notifications: React.FC = () => {
     }
   );
 
-  const markAsReadMutation = useMutation<null, Error, string>(
-    (id) => notificationsApi.markAsRead(id).then((res) => {
-      if (!res.data.success) {
-        throw new Error(res.data.error?.toString() || 'Failed to mark as read');
+  const markAsReadMutation = useMutation<ApiResponse<null>, Error, string>(
+    async (id) => {
+      const response = await notificationsApi.markAsRead(id);
+      if (!response.data.success) {
+        throw new Error(response.data.error?.toString() || 'Failed to mark as read');
       }
-      return res.data.data;
-    }),
+      return response.data;
+    },
     {
       onSuccess: () => {
         queryClient.invalidateQueries('notifications');
@@ -39,13 +40,14 @@ const Notifications: React.FC = () => {
     }
   );
 
-  const markAllAsReadMutation = useMutation<null, Error>(
-    () => notificationsApi.markAllAsRead().then((res) => {
-       if (!res.data.success) {
-        throw new Error(res.data.error?.toString() || 'Failed to mark all as read');
+  const markAllAsReadMutation = useMutation<ApiResponse<null>, Error>(
+    async () => {
+      const response = await notificationsApi.markAllAsRead();
+      if (!response.data.success) {
+        throw new Error(response.data.error?.toString() || 'Failed to mark all as read');
       }
-      return res.data.data
-    }),
+      return response.data;
+    },
     {
       onSuccess: () => {
         queryClient.invalidateQueries('notifications');

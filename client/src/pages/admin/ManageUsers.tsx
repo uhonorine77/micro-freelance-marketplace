@@ -2,7 +2,7 @@
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { adminApi } from '../../services/api';
-import { User } from '../../types';
+import { User } from '../../types/index';
 import { format } from 'date-fns';
 import { Trash2, Shield, User as UserIcon } from 'lucide-react';
 import { toast } from 'react-toastify';

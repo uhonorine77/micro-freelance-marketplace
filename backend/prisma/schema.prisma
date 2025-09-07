@@ -17,6 +17,12 @@ model User {
   avatarUrl     String? 
   role          UserRole
   isVerified    Boolean      @default(false)
+  
+  verificationToken          String?   @unique
+  verificationTokenExpires   DateTime?
+  passwordResetToken         String?   @unique
+  passwordResetTokenExpires  DateTime?
+
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
   tasks         Task[]
@@ -24,7 +30,6 @@ model User {
   notifications Notification[]
   messages      Message[]
 }
-
 enum UserRole {
   freelancer
   client
