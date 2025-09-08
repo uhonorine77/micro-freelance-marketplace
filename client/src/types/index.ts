@@ -1,5 +1,3 @@
-// src/types/index.ts
-
 export enum UserRole {
   freelancer = 'freelancer',
   client = 'client',
@@ -54,6 +52,9 @@ export interface User {
   createdAt: string;
   updatedAt: string;
   avatarUrl : string | null;
+  portfolioUrl?: string | null;
+  githubUrl?: string | null;
+  linkedinUrl?: string | null;
 }
 
 export interface UserPublicProfile {
@@ -158,6 +159,9 @@ export interface LoginPayload {
 export interface UpdateProfilePayload {
   firstName: string;
   lastName: string;
+  portfolioUrl?: string;
+  githubUrl?: string;
+  linkedinUrl?: string;
 }
 
 export interface CreateTaskPayload {

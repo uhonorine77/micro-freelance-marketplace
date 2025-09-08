@@ -21,6 +21,8 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import VerifyEmail from "./pages/auth/VerifyEmail";
 import BrowseTasks from "./pages/BrowseTasks";
+import MyProjects from './pages/MyProjects'; 
+import MyBids from './pages/MyBids'; 
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -40,7 +42,6 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/verify-email/:token" element={<VerifyEmail />} />
-
           {/* Protected Routes are nested within a parent Route that renders the DashboardLayout */}
           <Route
             element={
@@ -49,6 +50,8 @@ function App() {
               </ProtectedRoute>
             }
           >
+          <Route path="/tasks/my-projects" element={<MyProjects />} /> 
+          <Route path="/tasks/my-bids" element={<MyBids />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/tasks/browse" element={<BrowseTasks />} />
             <Route path="/tasks/new" element={<CreateTask />} />

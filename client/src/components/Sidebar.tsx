@@ -11,7 +11,6 @@ import {
   User,
   Shield,
   LogOut,
-  Settings,
   UserCheck,
 } from "lucide-react";
 
@@ -102,9 +101,7 @@ const Sidebar: React.FC = () => {
             <Link to="/profile" className="hover:text-indigo-600">
               <User className="h-5 w-5" />
             </Link>
-            <Link to="/settings" className="hover:text-indigo-600">
-              <Settings className="h-5 w-5" />
-            </Link>
+           
             <button onClick={logout} className="hover:text-red-600">
               <LogOut className="h-5 w-5" />
             </button>

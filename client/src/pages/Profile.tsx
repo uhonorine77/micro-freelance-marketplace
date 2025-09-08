@@ -1,5 +1,5 @@
 // client/src/pages/Profile.tsx
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient, QueryKey } from "react-query";
 import { profileApi } from "../services/api";
@@ -8,14 +8,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "react-toastify";
-import { format } from "date-fns";
 import {
   Camera,
   User as UserIcon,
   Mail,
-  Briefcase,
-  Calendar,
   Loader2,
+  Link as LinkIcon,
+  Github,
+  Linkedin,
 } from "lucide-react";
 import { AxiosError } from "axios";
 
@@ -57,6 +57,9 @@ const ProfileSkeleton = () => (
 const profileSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
+  portfolioUrl: z.string().url("Please enter a valid URL").optional().or(z.literal('')),
+  githubUrl: z.string().url("Please enter a valid URL").optional().or(z.literal('')),
+  linkedinUrl: z.string().url("Please enter a valid URL").optional().or(z.literal('')),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -64,7 +67,6 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 const Profile: React.FC = () => {
   const { user, setUser } = useAuth();
   const queryClient = useQueryClient();
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -84,7 +86,6 @@ const Profile: React.FC = () => {
     },
     {
       enabled: !!user,
-      onSuccess: (data) => setAvatarPreview(data.avatarUrl || null),
     }
   );
 
@@ -99,7 +100,13 @@ const Profile: React.FC = () => {
 
   useEffect(() => {
     if (profile) {
-      reset({ firstName: profile.firstName, lastName: profile.lastName });
+      reset({
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        portfolioUrl: profile.portfolioUrl || '',
+        githubUrl: profile.githubUrl || '',
+        linkedinUrl: profile.linkedinUrl || '',
+      });
     }
   }, [profile, reset]);
 
@@ -135,19 +142,12 @@ const Profile: React.FC = () => {
         }
         const newAvatarUrl = response.data.data.avatarUrl;
         toast.success("Profile picture updated!");
-        setUser((prevUser) =>
-          prevUser ? { ...prevUser, avatarUrl: newAvatarUrl } : null
-        );
-        queryClient.setQueryData<User | undefined>(
-          ["profile", user?.id],
-          (oldData) =>
-            oldData ? { ...oldData, avatarUrl: newAvatarUrl } : undefined
-        );
-        setAvatarPreview(newAvatarUrl);
+        const updatedUser = { ...user!, avatarUrl: newAvatarUrl };
+        setUser(updatedUser);
+        queryClient.setQueryData(['profile', user?.id], updatedUser);
       },
       onError: (err: any) => {
         toast.error(err?.response?.data?.error || "Upload failed.");
-        setAvatarPreview(profile?.avatarUrl || null);
       },
     }
   );
@@ -155,8 +155,6 @@ const Profile: React.FC = () => {
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const previewUrl = URL.createObjectURL(file);
-      setAvatarPreview(previewUrl);
       uploadPictureMutation.mutate(file);
     }
   };
@@ -187,9 +185,9 @@ const Profile: React.FC = () => {
               className="hidden"
             />
             <div className="h-32 w-32 rounded-full ring-4 ring-white ring-offset-2 ring-offset-indigo-100 relative group">
-              {avatarPreview ? (
+              {profile.avatarUrl ? (
                 <img
-                  src={avatarPreview}
+                  src={profile.avatarUrl}
                   alt="Avatar"
                   className="h-full w-full rounded-full object-cover"
                 />
@@ -198,7 +196,6 @@ const Profile: React.FC = () => {
                   <UserIcon className="h-16 w-16 text-gray-400" />
                 </div>
               )}
-              {/* --- Upload Loading Indicator --- */}
               {uploadPictureMutation.isLoading && (
                 <div className="absolute inset-0 bg-white/60 flex items-center justify-center rounded-full">
                   <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
@@ -224,15 +221,22 @@ const Profile: React.FC = () => {
             <p className="text-gray-500 text-md mt-1 flex items-center justify-center sm:justify-start">
               <Mail className="h-4 w-4 mr-2 text-gray-400" /> {profile.email}
             </p>
-            <div className="mt-3 flex items-center justify-center sm:justify-start space-x-4 text-sm text-gray-600">
-              <span className="inline-flex items-center bg-indigo-50 text-indigo-700 font-medium px-3 py-1 rounded-full">
-                <Briefcase className="h-4 w-4 mr-1.5" />{" "}
-                {profile.role.charAt(0).toUpperCase() + profile.role.slice(1)}
-              </span>
-              <span className="inline-flex items-center text-gray-500">
-                <Calendar className="h-4 w-4 mr-1.5" /> Member since{" "}
-                {format(new Date(profile.createdAt), "MMM yyyy")}
-              </span>
+            <div className="mt-4 flex items-center justify-center sm:justify-start space-x-3">
+              {profile.portfolioUrl && (
+                <a href={profile.portfolioUrl} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-indigo-600">
+                  <LinkIcon className="h-6 w-6" />
+                </a>
+              )}
+              {profile.githubUrl && (
+                <a href={profile.githubUrl} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-800">
+                  <Github className="h-6 w-6" />
+                </a>
+              )}
+              {profile.linkedinUrl && (
+                <a href={profile.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-700">
+                  <Linkedin className="h-6 w-6" />
+                </a>
+              )}
             </div>
           </div>
         </div>
@@ -282,6 +286,26 @@ const Profile: React.FC = () => {
                 )}
               </div>
             </div>
+
+            <h3 className="text-lg font-medium text-gray-700 pt-4 border-t mt-6">Links</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="portfolioUrl" className="block text-sm font-medium text-gray-600 mb-1">Portfolio URL</label>
+                <input id="portfolioUrl" {...register("portfolioUrl")} type="text" placeholder="https://your-portfolio.com" className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm" />
+                {errors.portfolioUrl && <p className="mt-1 text-sm text-red-600">{errors.portfolioUrl.message}</p>}
+              </div>
+              <div>
+                <label htmlFor="githubUrl" className="block text-sm font-medium text-gray-600 mb-1">GitHub URL</label>
+                <input id="githubUrl" {...register("githubUrl")} type="text" placeholder="https://github.com/your-username" className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm" />
+                {errors.githubUrl && <p className="mt-1 text-sm text-red-600">{errors.githubUrl.message}</p>}
+              </div>
+              <div>
+                <label htmlFor="linkedinUrl" className="block text-sm font-medium text-gray-600 mb-1">LinkedIn URL</label>
+                <input id="linkedinUrl" {...register("linkedinUrl")} type="text" placeholder="https://linkedin.com/in/your-profile" className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm" />
+                {errors.linkedinUrl && <p className="mt-1 text-sm text-red-600">{errors.linkedinUrl.message}</p>}
+              </div>
+            </div>
+
             <div className="flex justify-end pt-4">
               <button
                 type="submit"

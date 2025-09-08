@@ -2,8 +2,8 @@
 import React from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useQuery } from "react-query";
-import { notificationsApi, tasksApi } from "../services/api";
-import {  UserRole, TaskStatus } from "../types";
+import { notificationsApi, tasksApi, bidsApi } from "../services/api";
+import { UserRole, TaskStatus, BidStatus, TaskWithClient, Notification, BidWithFreelancer } from "../types";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -12,8 +12,10 @@ import {
   PlusCircle,
   CheckCircle,
   Clock,
+  Loader2,
 } from "lucide-react";
 
+// Reusable Stat Card Component
 const StatCard: React.FC<{
   title: string;
   value: number;
@@ -35,27 +37,63 @@ const StatCard: React.FC<{
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
+  // navigate was removed as it was unused
 
-  // Fetch recent notifications for the activity feed
-  const { data: notifications = [] } = useQuery(
+  const { data: allTasks, isLoading: isLoadingTasks } = useQuery(
+    'allTasksForDashboard',
+    () => tasksApi.getAll().then((res) => res.data.data || []),
+    { enabled: !!user }
+  );
+
+  const { data: myBids, isLoading: isLoadingBids } = useQuery(
+    'myBidsForDashboard',
+    () => bidsApi.getMyBids().then((res) => res.data.data || []), // FIX: Now correctly calls getMyBids
+    { enabled: user?.role === UserRole.freelancer }
+  );
+
+  const { data: notifications = [], isLoading: isLoadingNotifications } = useQuery(
     "notifications",
     () => notificationsApi.getAll().then((res) => res.data.data!),
     {
-      select: (data) => data.slice(0, 5), // Get latest 5
+      enabled: !!user,
+      select: (data) => data.slice(0, 5),
     }
   );
 
-  // Fetch tasks for stats and recent projects list
-  const { data: tasks = [] } = useQuery("tasks", () =>
-    tasksApi.getAll().then((res) => res.data.data!)
-  );
+  const stats = React.useMemo(() => {
+    if (!user || !allTasks) return { active: 0, completed: 0, open: 0 };
+    
+    if (user.role === UserRole.client) {
+      const myProjects = allTasks.filter(t => t.clientId === user.id);
+      return {
+        active: myProjects.filter(p => p.status === TaskStatus.in_progress || p.status === TaskStatus.assigned).length,
+        completed: myProjects.filter(p => p.status === TaskStatus.completed).length,
+        open: 0,
+      };
+    }
+    
+    if (user.role === UserRole.freelancer) {
+      // FIX: Added explicit 'any' type cast for task on bid object because it's not fully typed in the relation
+      const myAcceptedTaskIds = myBids?.filter((b: BidWithFreelancer) => b.status === BidStatus.accepted).map((b: BidWithFreelancer) => (b.task as any).id) || [];
+      const myCompletedTasks = allTasks.filter(t => myAcceptedTaskIds.includes(t.id) && t.status === TaskStatus.completed).length;
+      return {
+        active: 0,
+        completed: myCompletedTasks,
+        open: allTasks.filter(t => t.status === TaskStatus.open).length,
+      };
+    }
 
-  const myProjects =
-    user?.role === UserRole.client
-      ? tasks.filter((t) => t.clientId === user.id)
-      : [];
-  const openProjects = tasks.filter((t) => t.status === "open");
-  const completedProjects = tasks.filter((t) => t.status === "completed");
+    return { active: 0, completed: 0, open: 0 };
+  }, [user, allTasks, myBids]);
+  
+  const recentProjects = (user?.role === UserRole.client 
+    ? allTasks?.filter(t => t.clientId === user.id) 
+    : allTasks
+  )?.slice(0, 5) || [];
+
+  if (isLoadingTasks || isLoadingNotifications || (user?.role === UserRole.freelancer && isLoadingBids)) {
+    return <div className="p-8 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto text-indigo-600" /></div>;
+  }
 
   return (
     <div>
@@ -64,31 +102,20 @@ const Dashboard: React.FC = () => {
       </h1>
       <p className="text-gray-500 mb-8">Here's a summary of your activity.</p>
 
-      {/* --- STATS CARDS --- */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {user?.role === UserRole.client && (
-          <StatCard
-            title="My Active Projects"
-            value={myProjects.filter((p) => p.status === "in_progress").length}
-            icon={Clock}
-            color="bg-yellow-500"
-          />
+          <>
+            <StatCard title="My Active Projects" value={stats.active} icon={Clock} color="bg-yellow-500" />
+            <StatCard title="Completed Projects" value={stats.completed} icon={CheckCircle} color="bg-green-500" />
+          </>
         )}
         {user?.role === UserRole.freelancer && (
-          <StatCard
-            title="Open for Bidding"
-            value={openProjects.length}
-            icon={Briefcase}
-            color="bg-blue-500"
-          />
+          <>
+            <StatCard title="Open for Bidding" value={stats.open} icon={Briefcase} color="bg-blue-500" />
+            <StatCard title="My Completed Projects" value={stats.completed} icon={CheckCircle} color="bg-green-500" />
+          </>
         )}
-        <StatCard
-          title="Completed Projects"
-          value={completedProjects.length}
-          icon={CheckCircle}
-          color="bg-green-500"
-        />
-
+        
         {user?.role === UserRole.client ? (
           <Link
             to="/tasks/new"
@@ -114,77 +141,50 @@ const Dashboard: React.FC = () => {
         )}
       </div>
 
-      {/* --- TWO COLUMN LAYOUT FOR RECENT ACTIVITY & PROJECTS --- */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Recent Activity */}
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">
             Recent Activity
           </h2>
           <ul className="space-y-4">
             {notifications.length > 0 ? (
-              notifications.map((n) => (
+              notifications.map((n: Notification) => (
                 <li key={n.id} className="flex items-start space-x-3">
-                  <div
-                    className={`mt-1 p-1.5 rounded-full ${
-                      n.isRead ? "bg-gray-100" : "bg-indigo-100"
-                    }`}
-                  >
-                    <Bell
-                      className={`h-4 w-4 ${
-                        n.isRead ? "text-gray-400" : "text-indigo-600"
-                      }`}
-                    />
+                  <div className={`mt-1 p-1.5 rounded-full ${ n.isRead ? "bg-gray-100" : "bg-indigo-100" }`}>
+                    <Bell className={`h-4 w-4 ${ n.isRead ? "text-gray-400" : "text-indigo-600" }`} />
                   </div>
                   <div>
-                    <p
-                      className={`text-sm ${
-                        n.isRead ? "text-gray-600" : "text-gray-800 font-medium"
-                      }`}
-                    >
+                    <p className={`text-sm ${ n.isRead ? "text-gray-600" : "text-gray-800 font-medium" }`}>
                       {n.message}
                     </p>
                     <p className="text-xs text-gray-400">
-                      {formatDistanceToNow(new Date(n.createdAt), {
-                        addSuffix: true,
-                      })}
+                      {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
                     </p>
                   </div>
                 </li>
               ))
             ) : (
-              <p className="text-sm text-gray-500">No new notifications.</p>
+              <p className="text-sm text-center text-gray-500 py-8">No new activity to show.</p>
             )}
           </ul>
         </div>
 
-        {/* Recent Projects */}
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            {user?.role === UserRole.client
-              ? "My Recent Projects"
-              : "Recently Posted"}
+            {user?.role === UserRole.client ? "My Recent Projects" : "Recently Posted"}
           </h2>
           <ul className="space-y-3">
-            {(user?.role === UserRole.client ? myProjects : tasks)
-              .slice(0, 5)
-              .map((task) => (
+            {recentProjects.length > 0 ? (
+              recentProjects.map((task: TaskWithClient) => (
                 <li key={task.id}>
-                  <Link
-                    to={`/task/${task.id}`}
-                    className="block p-3 rounded-md hover:bg-gray-50"
-                  >
+                  <Link to={`/task/${task.id}`} className="block p-3 rounded-md hover:bg-gray-50">
                     <div className="flex items-center justify-between">
-                      <p className="font-semibold text-gray-700 truncate">
-                        {task.title}
-                      </p>
-                      <span
-                        className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                          task.status === TaskStatus.open
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
-                      >
+                      <p className="font-semibold text-gray-700 truncate">{task.title}</p>
+                      <span className={`px-2 py-0.5 text-xs font-medium rounded-full capitalize ${
+                        task.status === TaskStatus.open ? "bg-green-100 text-green-800" :
+                        task.status === TaskStatus.in_progress || task.status === TaskStatus.assigned ? "bg-blue-100 text-blue-800" :
+                        "bg-purple-100 text-purple-800"
+                      }`}>
                         {task.status.replace("_", " ")}
                       </span>
                     </div>
@@ -193,7 +193,12 @@ const Dashboard: React.FC = () => {
                     </p>
                   </Link>
                 </li>
-              ))}
+              ))
+            ) : (
+                <p className="text-sm text-center text-gray-500 py-8">
+                    {user?.role === UserRole.client ? "You haven't posted any projects yet." : "No projects have been posted recently."}
+                </p>
+            )}
           </ul>
         </div>
       </div>

@@ -1,4 +1,3 @@
-// client/src/services/api.ts
 import axios, { AxiosResponse, AxiosError } from "axios";
 import {
   ApiResponse,
@@ -90,6 +89,8 @@ export const bidsApi = {
     taskId: string
   ): Promise<AxiosResponse<ApiResponse<BidWithFreelancer[]>>> =>
     api.get(`/bids/task/${taskId}`),
+  getMyBids: (): Promise<AxiosResponse<ApiResponse<BidWithFreelancer[]>>> =>
+    api.get('/bids/my-bids'),
   create: (
     bidData: CreateBidPayload
   ): Promise<AxiosResponse<ApiResponse<Bid>>> => api.post("/bids", bidData),

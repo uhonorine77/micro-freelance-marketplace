@@ -18,6 +18,37 @@ import { getSocketIoInstance } from "../socket";
 const router = express.Router();
 
 export const createBidsRouter = (prisma: PrismaClient) => {
+   // GET /api/bids/my-bids - Fetch all bids for the current freelancer
+   router.get(
+    "/my-bids",
+    async (req: AuthRequest, res: Response<ApiResponse<BidWithFreelancer[]>>) => {
+      try {
+        if (!req.user || req.user.role !== UserRole.freelancer) {
+          return res.status(403).json({ success: false, error: "Access denied." });
+        }
+
+        const myBids = await prisma.bid.findMany({
+          where: { freelancerId: req.user.id },
+          include: {
+            task: { // Include task details with each bid
+              select: {
+                id: true,
+                title: true,
+                status: true,
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        });
+
+        res.json({ success: true, data: myBids as any });
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Failed to fetch your bids";
+        res.status(500).json({ success: false, error: errorMessage });
+      }
+    }
+  );
+
   // GET /api/bids/task/:taskId - Fetch all bids for a specific task
   router.get(
     "/task/:taskId",
