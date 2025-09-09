@@ -47,6 +47,10 @@ app.use(
   })
 );
 
+app.get('/',(req,res)=>{
+  res.send('Welcome to freelance hub');
+})
+
 app.use(
   cors({
     origin: ["http://localhost:5000", "http://localhost:5001"],
