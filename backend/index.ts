@@ -53,7 +53,7 @@ app.get('/',(_req,res)=>{
 
 app.use(
   cors({
-    origin: ["http://localhost:5000", "https://micro-freelance.netlify.app"],
+    origin: ["https://micro-freelance.netlify.app"],
     credentials: true,
   })
 );

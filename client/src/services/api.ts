@@ -19,7 +19,7 @@ import {
   AdminStatsData,
 } from "../types";
 
-const API_BASE_URL = "https://micro-freelance-marketplace.onrender.com/";
+const API_BASE_URL = "https://micro-freelance-marketplace.onrender.com/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
